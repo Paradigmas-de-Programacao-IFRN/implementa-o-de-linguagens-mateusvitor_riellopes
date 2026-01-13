@@ -1,0 +1,3 @@
+repita 5 vezes {
+  exiba "Funciona";
+}

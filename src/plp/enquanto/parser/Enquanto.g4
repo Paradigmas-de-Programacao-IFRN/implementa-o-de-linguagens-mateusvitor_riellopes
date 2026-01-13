@@ -1,34 +1,48 @@
 grammar Enquanto;
 
-programa : seqComando;     // sequência de comandos
+programa : seqComando EOF?;     // sequência de comandos
 
-seqComando: comando (';' comando)* ;
+seqComando: (comando ';')* comando? ;
 
-comando: ID ':=' expressao                               # atribuicao
-       | 'skip'                                          # skip
-       | 'se' booleano 'entao' comando 'senao' comando   # se
-       | 'enquanto' booleano 'faca' comando              # enquanto
-       | 'exiba' TEXTO                                   # exiba
-       | 'escreva' expressao                             # escreva
-       | '{' seqComando '}'                              # bloco
+comando: atribuicao                                        # atribuicaoCmd
+        | 'skip'                                            # skip
+                        | 'se' booleano ('entao'|'ent\u00e3o') comando ('senaose' booleano ('entao'|'ent\u00e3o') comando)* 'senao' comando # se
+       | 'enquanto' booleano 'faca' comando                # enquanto
+       | 'para' ID 'de' expressao 'ate' expressao ('passo' expressao)? 'faca' comando # para
+       | 'repita' expressao 'vezes' comando                # repita
+       | 'escolha' expressao escolhaCorpo                  # escolha
+       | 'exiba' (TEXTO | expressao)                       # exiba
+       | 'escreva' expressao                               # escreva
+       | '{' seqComando '}'                                # bloco
        ;
 
-expressao: INT                                           # inteiro
-         | 'leia'                                        # leia
-         | ID                                            # id
-         | expressao '*' expressao                       # opBin
-         | expressao ('+' | '-') expressao               # opBin
-         | '(' expressao ')'                             # expPar
+escolhaCorpo: (caso)+ defaultCaso? ;
+caso: 'caso' expressao ':' comando ;
+defaultCaso: ('outro' | '_') ':' comando ;
+
+atribuicao: listaId (':=' | '=') listaExpressao ;
+listaId: ID (',' ID)* ;
+listaExpressao: expressao (',' expressao)* ;
+
+expressao: expressao '^' expressao                         # opPow
+         | expressao ('*' | '/') expressao                 # opMulDiv
+         | expressao ('+' | '-') expressao                 # opAddSub
+         | INT                                             # inteiro
+         | 'leia'                                          # leia
+         | ID                                              # id
+         | '(' expressao ')'                               # expPar
          ;
 
-booleano: BOOLEANO                                       # bool
-        | expressao '=' expressao                        # opRel
-        | expressao '<=' expressao                       # opRel
-        | 'nao' booleano                                 # naoLogico
-        | booleano 'e' booleano                          # eLogico
-        | '(' booleano ')'                               # boolPar
+booleano: booleano 'e' booleano                            # eLogico
+        | booleano 'ou' booleano                           # ouLogico
+        | booleano 'xor' booleano                          # xorLogico
+        | 'nao' booleano                                   # naoLogico
+        | expressao relop expressao                        # opRel
+        | '(' booleano ')'                                 # boolPar
+        | BOOLEANO                                         # bool
         ;
 
+relop: '=' | '<=' | '<' | '>' | '>=' | '<>' ;
 
 BOOLEANO: 'verdadeiro' | 'falso';
 INT: ('0'..'9')+ ;
